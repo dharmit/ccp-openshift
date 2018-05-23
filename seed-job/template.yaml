@@ -41,6 +41,8 @@ objects:
             value: ${APP_ID}
           - name: JOB_ID
             value: ${JOB_ID}
+          - name: REGISTRY_URL
+            value: ${REGISTRY_URL}
 parameters:
 - description: "Path to a directory containing a Dockerfile"
   displayName: "Git Path"
@@ -98,5 +100,8 @@ parameters:
 - description: job_id is analogoues to repo name in Docker Hub
   displayName: Job ID
   name: JOB_ID
+  required: true
+- description: registry_url is the url of the registry, into which the push is supposed to happen.
+  name: REGISTRY_URL
   required: true
 
