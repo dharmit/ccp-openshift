@@ -13,7 +13,27 @@ But the resources can be varied based on availability. However, make sure to
 use `--iso-url centos` part in above command as we have setup things on CentOS
 based minishift VM.
 
-Once the VM is ready, spin up a Jenkins server that can be used by the Jenkins
+Once the VM is ready, get into the vm using the command `$ minishift ssh`. Once you are in, apply the following steps to install an external registry. You are free to install it on a separate system, or your base machine, just ensure it is reachable from the minishift vm.
+
+    $ yum -y install docker-distribution
+
+If you are running on a separate machine, as it would be recommended, you can skip the below step of configuring the registry. Otherwise please edit the config file located at `/etc/docker-distribution/registry/config.yml` to setup ports/storage etc. Once done, start the service with
+
+    $ sudo systemctl enable --now docker-distribution
+
+Ensure you add the registry as insecure to the docker daemon by editing the configuration located at `/etc/docker/daemon.json` as 
+
+    {
+    	"insecure-registries": ["x.x.x.x:5000"]
+    }
+
+Dont forget to restart the docker daemon.
+
+Now set the environment variable to allow the pipeline to be able to pick up on the registry as follows
+
+    $ echo "export REGISTRY_URL='registry_server:registry_port'" >> /etc/bashrc
+
+Now spin up a Jenkins server that can be used by the Jenkins
 Pipeline buildconfigs. Also, since we're going to be building images using
 Jenkins pods, we need to add few capabilities to the Jenkins service account.
 Do this on host system:
