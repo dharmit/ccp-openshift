@@ -25,7 +25,7 @@ for entry in yml_dict["Projects"]:
         "-p APP_ID={} ".format(entry["app-id"]) + \
         "-p JOB_ID={} ".format(entry["job-id"]) + \
         "-p REGISTRY_URL={}".format(
-            os.environ.get("REGISTRY_URL") or "registry.centos.org"
+            os.environ.get("REGISTRY_URL")
         )
 
     # there's gotta be a better way to ensure that buildconfigs created by

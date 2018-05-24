@@ -13,7 +13,7 @@ But the resources can be varied based on availability. However, make sure to
 use `--iso-url centos` part in above command as we have setup things on CentOS
 based minishift VM.
 
-Once the VM is ready, get into the vm using the command `$ minishift ssh`. Once you are in, apply the following steps to install an external registry. You are free to install it on a separate system, or your base machine, just ensure it is reachable from the minishift vm.
+Once the VM is up, log into the vm using the command `$ minishift ssh`. Once you are in, apply the following steps to install docker distribution registry. You can also install it on a seperate system, or your base machine, just ensure it is reachable from the minishift VM.
 
     $ yum -y install docker-distribution
 

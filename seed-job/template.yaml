@@ -101,7 +101,8 @@ parameters:
   displayName: Job ID
   name: JOB_ID
   required: true
-- description: registry_url is the url of the registry, into which the push is supposed to happen.
+- description: URL of the registry to which image is to be pushed.
   name: REGISTRY_URL
+  displayName: Registry URL.
   required: true
 
