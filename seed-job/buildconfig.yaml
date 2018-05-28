@@ -20,5 +20,7 @@ spec:
         value: master
       - name: PIPELINE_TARGET_DIR
         value: "source"
+      - name: REGISTRY_URL
+        value: ${REGISTRY_URL}
   triggers:
       - type: ConfigChange
