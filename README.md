@@ -17,7 +17,21 @@ Once the VM is up, log into the vm using the command `$ minishift ssh`. Once you
 
     $ yum -y install docker-distribution
 
-If you are running on a separate machine, as it would be recommended, you can skip the below step of configuring the registry. Otherwise please edit the config file located at `/etc/docker-distribution/registry/config.yml` to setup ports/storage etc. Once done, start the service with
+If you are running on a separate machine, as it would be recommended, you can skip the below step of configuring the registry. Otherwise please edit the config file located at `/etc/docker-distribution/registry/config.yml` to setup ports/storage etc. 
+
+    version: 0.1
+    log:
+      fields:
+        service: registry
+    storage:
+        cache:
+            layerinfo: inmemory
+        filesystem:
+            rootdirectory: /var/lib/registry
+    http:
+        addr: :10000
+
+Once done, start the service with
 
     $ sudo systemctl enable --now docker-distribution
 
@@ -27,7 +41,7 @@ Ensure you add the registry as insecure to the docker daemon by editing the conf
     	"insecure-registries": ["x.x.x.x:5000"]
     }
 
-Dont forget to restart the docker daemon.
+And restart the docker daemon.
 
 Now set the environment variable to allow the pipeline to be able to pick up on the registry as follows
 
@@ -59,9 +73,9 @@ $ git clone https://github.com/dharmit/ccp-openshift/
 $ cd ccp-openshift
 $ oc login -u developer
 <use any password>
-$ oc create -f seed-job/buildconfig.yaml
+$ export REGISTRY_URL="registry_server:registry_port"
+$ oc process -p REGISTRY_URL=${REGISTRY_URL} -f seed-job/buildconfig.yaml | oc create -f -
 ```
-
 Now check in the OpenShift web console under Build -> Pipelines and see if a
 Jenkins Pipeline has been created. Be patient because the image being used is
 quite large (2.2 GB) at the moment.
@@ -77,3 +91,5 @@ effect. Once it's done, exec into the Jenkins pod and check the output of `ps
 command as space-separated and not comma-separated. Refer [this
 diff](https://github.com/openshift/openshift-docs/pull/7259/files?short_path=05f80f3#diff-05f80f3ab954ce57c630417065819109)
 to ensure that values are passed properly.
+
+
