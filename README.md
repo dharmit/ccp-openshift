@@ -1,3 +1,42 @@
+### Scope of the MVP (Minimal Viable Product)
+
+#### What does this MVP do?
+
+- Parses the container index and creates OpenShift Pipelines (based on Jenkins
+  Pipeline)
+- The newly created OpenShift Pipelines are triggered at the time of creation
+- Lints the Dockerfile
+- Builds the container image. Can do parallel builds using sinngle Docker
+  daemon at the same time
+- Scans the container image for RPM updates and RPM verification (`rpm -Va`)
+- Delivers the container image to external registry (`docker-distribution`)
+
+#### What does this MVP not do?
+
+- It doesn't poll the remote repositories to automatically trigger a build when
+  there's an update in the repo
+- It doesn't have parent-child relationship between images
+- There's no weekly scan, repo tracking, etc. which are the parts of existing
+  container pipeline
+- Above discussed points will be added gradually to the Pipeline but not on
+  this branch
+- Registry cleanup is not covered. The external registry you use could get full
+  depending on the amount of projects you're building
+
+#### How to work with this MVP?
+
+- Once you've followed the instruction to setup the MVP using either minishift
+  or `oc cluster up`, you need to open the OpenShift web console (IP-port
+  combination will be provided by minishift or `oc cluster up`, whichever you
+  use)
+- In the web console, login using the user `developer`
+- To see the OpenShift Pipelines in action, hover your mouse over "Builds" on
+  the side-bar at left and click on "Pipelines"
+- To trigger a build (lint + build + scan + delivery) for any project after the
+  first build, you'll have to manually click on "Start Build"
+
+### Let's get started!
+
 To spin up things in an OpenShift cluster based on the contents in this
 repository, please make sure you have a minishift based VM or a CentOS VM with
 root privileges. You'll also need to spin up Docker Distribution (registry) on
