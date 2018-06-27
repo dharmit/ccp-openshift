@@ -5,20 +5,26 @@ same VM or different VM.
 
 ### Docker Distribution (registry) setup
 
-The system on which you'd like to setup the registry, execute following
-commands:
+A Docker Registry is required to push images.
+
+#### CentOS / Fedora / RHEL-based distributions
 
 ```bash
 $ yum install -y docker-distribution
 $ systemctl enable --now docker-distribution
 ```
 
-Also make sure that the firewall rules are not blocking access to the registry
-(port 5000 by default.)
+Make sure that port 5000 is accessible publically.
+
+### Docker
+
+```sh
+$ docker run -d -p 5000:5000 --name registry registry:2
+```
 
 ### OpenShift setup
 
-**Minishift**
+#### Minishift
 
 Start the minishift VM using below command:
 
@@ -31,7 +37,7 @@ have 4GB memory and 20GB disk space as minimum. However, make sure to use
 `--iso-url centos` part in above command as we have setup things on CentOS based
 minishift VM. 
 
-**CentOS VM**
+#### CentOS VM
 
 A CentOS VM with 8GB memory and 50GB disk space should suffice. You can adjust
 the resources based on availability. It is recommended to have 4GB memory and
