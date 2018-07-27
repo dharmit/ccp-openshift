@@ -3,30 +3,12 @@ This script parses the container index specified and
 creates the Jenkins pipeline projects from entries of index.
 """
 
-import subprocess
 import sys
-import yaml
-
 from glob import glob
 
 
-def run_cmd(cmd, shell=False):
-    """
-    Runs the given shell command
-
-    :param cmd: Command to run
-    :param shell: Whether to run raw shell commands with '|' and redirections
-    :type cmd: str
-    :type shell: boolean
-
-    :return: Command output
-    :rtype: str
-    :raises: subprocess.CalledProcessError
-    """
-    if shell:
-        return subprocess.check_output(cmd, shell=True)
-    else:
-        return subprocess.check_output(cmd.split(), shell=False)
+from ccp.lib.utils import run_cmd, load_yaml, replace_dot_slash_colon_
+import ccp.lib.constants as constants
 
 
 class Project(object):
@@ -50,14 +32,6 @@ class Project(object):
         """
         return self.pipeline_name
 
-    def replace_dot_slash_colon_(self, value):
-        """
-        Given a value with either dot slash or underscore,
-        replace each with hyphen
-        """
-        return value.replace("_", "-").replace("/", "-").replace(
-            ".", "-").replace(":", "-")
-
     def process_depends_on(self, depends_on=None):
         """
         Process depends_on for given project based on entry index
@@ -69,12 +43,12 @@ class Project(object):
         if isinstance(depends_on, list):
             return ",".join("{}-{}".format(
                 self.namespace,
-                self.replace_dot_slash_colon_(d))
+                replace_dot_slash_colon_(d))
                 for d in depends_on)
         else:
             return "{}-{}".format(
                 self.namespace,
-                self.replace_dot_slash_colon_(depends_on))
+                replace_dot_slash_colon_(depends_on))
 
     def process_desired_tag(self, desired_tag=None):
         """
@@ -105,11 +79,15 @@ class Project(object):
         Loads a container index entry in class objects
         """
         try:
-            self.app_id = self.replace_dot_slash_colon_(entry['app-id'])
-            self.job_id = self.replace_dot_slash_colon_(entry['job-id'])
+            self.app_id = replace_dot_slash_colon_(
+                entry[constants.FieldKeys.APP_ID]
+            )
+            self.job_id = replace_dot_slash_colon_(
+                entry[constants.FieldKeys.JOB_ID]
+            )
 
-            self.git_url = entry['git-url']
-            self.git_path = entry['git-path']
+            self.git_url = entry[constants.FieldKeys.GIT_URL]
+            self.git_path = entry[constants.FieldKeys.GIT_PATH]
             self.git_branch = entry['git-branch']
             self.target_file = entry['target-file']
             self.build_context = entry.get('build-context', "./")
@@ -143,22 +121,6 @@ class IndexReader(object):
         self.index = index
         self.namespace = namespace
 
-    def read_yaml(self, filepath):
-        """
-        Read the YAML file at specified location
-
-        return the yaml data on success
-        raise an exception upon failure reading/load the file
-        """
-        try:
-            with open(filepath) as fin:
-                data = yaml.load(fin, Loader=yaml.BaseLoader)
-        except yaml.YAMLError as exc:
-            print ("Failed to read {}".format(filepath))
-            raise(exc)
-        else:
-            return data
-
     def read_projects(self):
         """
         Reads yaml entries from container index and returns
@@ -171,7 +133,7 @@ class IndexReader(object):
             if "index_template" in yamlfile:
                 continue
 
-            app = self.read_yaml(yamlfile)
+            app = load_yaml(yamlfile)
             for entry in app['Projects']:
                 # create a project object here with all properties
                 project = Project(entry, self.namespace)
