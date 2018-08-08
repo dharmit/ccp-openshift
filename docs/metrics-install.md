@@ -2,7 +2,7 @@
 Prometheus. After following this document, we will have Hawkular, Prometheus
 and Alert Manager accesible via OpenShift Web Console. We will also talk about
 setting up kube-ops-view which will help us have a quick view of our OpenShift
-cluster**
+cluster. Finally we will talk about deploying Grafana on the cluster.**
 
 This document assumes that you have an OpenShift 3.9.0 cluster up and running.
 If you don't have it already, take a look at
@@ -11,8 +11,9 @@ documents. Former talks about upgrading OpenShift cluster from 3.7.2 to 3.9.0
 while latter talk about setting up a fresh 3.9.0 in brief since it's mainly
 focussed on setting up logging stacks using EFK.
 
-This doc is split between setting up metrics using Hawkular and then setting up
-Prometheus to have a view of the metrics.
+This doc is split between setting up metrics using Hawkular, then setting up
+Prometheus to have a view of the metrics and finally setting up Grafana which
+uses the Prometheus data and shows more graphs.
 
 ### Setup Hawkular
 
@@ -312,3 +313,112 @@ $ time ansible-playbook -i openshift-cluster/hosts.39 /usr/share/ansible/openshi
 If the above command finished without any errors, go to the openshift-metrics
 project on OpenShift Web Console and check for the various routes exposed by
 Prometheus, Alert Manager and Alert Buffer.
+
+### Setup Grafana
+
+Grafana only requires access to the Prometheus data. To spin up a Grafana
+dashboard for your cluster, you need to add below parameter to the hosts file:
+
+```
+openshift_hosted_grafana_deploy=true
+```
+
+Our final hosts file will look like below:
+
+```
+# Create an OSEv3 group that contains the masters and nodes groups
+[OSEv3:children]
+masters
+nodes
+etcd
+
+# Set variables common for all OSEv3 hosts
+[OSEv3:vars]
+# SSH user, this user should allow ssh based auth without requiring a password
+ansible_ssh_user=root
+
+# If ansible_ssh_user is not root, ansible_become must be set to true
+# ansible_become=true
+# containerized=true
+debug_level=4
+
+openshift_master_api_port=8443
+# openshift_master_console_port=8756
+openshift_deployment_type=origin
+openshift_release=v3.9
+os_firewall_use_firewalld=true
+openshift_clock_enabled=false
+openshift_pkg_version=-3.9.0
+openshift_enable_service_catalog=false
+openshift_docker_insecure_registries=172.29.33.8:5000
+openshift_docker_additional_registries=172.29.33.8:5000
+openshift_master_default_subdomain={{ hostvars[groups['masters'][0]].openshift_ip }}.nip.io
+openshift_rolling_restart_mode=system
+
+# logging stack
+openshift_logging_install_logging=true
+openshift_logging_es_cluster_size=1
+openshift_logging_es_memory_limit=2G
+openshift_logging_elasticsearch_storage_type="hostmount"
+openshift_logging_elasticsearch_hostmount_path="/logging"
+openshift_logging_elasticsearch_nodeselector={'node-type': 'logging'}
+
+# logging stack for ops
+openshift_logging_use_ops=true
+openshift_logging_es_ops_cluster_size=1
+openshift_logging_es_ops_memory_limit=2G
+
+# metrics stack
+openshift_metrics_install_metrics=true
+openshift_metrics_cassandra_storage_type=pv
+openshift_metrics_cassandra_replicas=1
+openshift_metrics_cassandra_nodeselector={'node-type': 'metrics'}
+openshift_metrics_image_version=v3.9
+
+# prometheus stack
+openshift_hosted_prometheus_deploy=false
+ openshift_prometheus_node_selector={'node-type': 'metrics'}
+# openshift_prometheus_storage_kind=nfs
+# openshift_prometheus_alertmanager_storage_kind=nfs
+# openshift_prometheus_alertbuffer_storage_kind=nfs
+openshift_prometheus_storage_type=pvc
+openshift_prometheus_alertmanager_storage_type=pvc
+openshift_prometheus_alertbuffer_storage_type=pvc
+openshift_prometheus_additional_rules_file=/root/openshift-cluster/rules.example
+
+# grafana deployment
+openshift_hosted_grafana_deploy=true
+
+# uncomment the following to enable htpasswd authentication; defaults to DenyAllPasswordIdentityProvider
+openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider', 'filename': '/etc/origin/master/htpasswd'}]
+
+# default selectors for router and registry services
+openshift_router_selector='region=infra'
+openshift_registry_selector='region=infra'
+openshift_disable_check=docker_storage,memory_availability
+
+# host group for masters
+[masters]
+os-master-[1:2].lon1.centos.org
+
+# host group for etcd
+[etcd]
+os-node-[1:2].lon1.centos.org
+
+# host group for nodes, includes region info
+[nodes]
+os-master-1.lon1.centos.org openshift_node_labels="{'region': 'infra','zone': 'default','purpose':'infra', 'node-type': 'metrics'}" openshift_schedulable=true openshift_ip=172.29.33.36
+os-master-2.lon1.centos.org openshift_node_labels="{'region': 'infra','zone': 'default','purpose':'infra', 'node-type': 'logging'}" openshift_schedulable=true openshift_ip=172.29.33.46
+os-node-1.lon1.centos.org openshift_node_labels="{'region':'primary','zone': 'default','purpose':'prod', 'node-type': 'logging'}" openshift_schedulable=true openshift_ip=172.29.33.23
+os-node-2.lon1.centos.org openshift_node_labels="{'region':'primary','zone': 'default','purpose':'prod', 'node-type': 'logging'}" openshift_schedulable=true openshift_ip=172.29.33.52
+```
+
+With that in place, execute below command to start Grafana installation:
+
+```bash
+$ ansible-playbook -i openshift-cluster/hosts.39 /usr/share/ansible/openshift-ansible/playbooks/openshift-grafana/config.yml -vvv
+```
+
+Grafana gets deployed under `openshift-grafana` namespace in OpenShift. You
+will need to navigate to it to find the exposed route that can be used to
+access the dashboard.
