@@ -132,9 +132,9 @@ objects:
                     }
                     finally {
                         if (success==true) {
-                            sh "echo -e 'Build request for ${image_name} was successful' | mail -r ${FROM_ADDRESS} -S smtp=${SMTP_SERVER} -s 'SUCCESS: Container build ${image_name} is complete' ${NOTIFY_EMAIL} "
+                            sh "echo -e 'Build request for ${image_name_with_registry} was successful' | mail -r ${FROM_ADDRESS} -S smtp=${SMTP_SERVER} -s 'SUCCESS: Container build ${image_name} is complete' ${NOTIFY_EMAIL} "
                         } else {
-                            sh "echo -e 'Build request for ${image_name} was unsuccessful' | mail -r ${FROM_ADDRESS} -S smtp=${SMTP_SERVER} -s 'FAILED: Container build ${image_name} has failed' ${NOTIFY_EMAIL} "
+                            sh "echo -e 'Build request for ${image_name_with_registry} was unsuccessful' | mail -r ${FROM_ADDRESS} -S smtp=${SMTP_SERVER} -s 'FAILED: Container build ${image_name} has failed' ${NOTIFY_EMAIL} "
                         }
                     }
                 }
