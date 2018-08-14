@@ -126,10 +126,7 @@ class PipelineRegistryGarbageCollector(RegistryGarbageCollector):
                     self.update_mismatched(
                         k, item, match_only_check,
                         match_only_list_found, exception_list_check,
-                        exception_list_found,
-                        not self.check_build_running(
-                            k, item
-                        )
+                        exception_list_found
                     )
 
         else:
@@ -157,18 +154,8 @@ class PipelineRegistryGarbageCollector(RegistryGarbageCollector):
                         self.update_mismatched(
                             registry_name, tag, match_only_check,
                             match_only_list_found, exception_list_check,
-                            exception_list_found,
-                            not self.check_build_running(
-                                registry_name,
-                                tag
-                            )
+                            exception_list_found
                         )
-
-    @staticmethod
-    def check_build_running(container_name, tag):
-        entered_loop = False
-        # TODO add logic for checking if build is running in new architecture
-        return entered_loop
 
     def pre_removal(self):
         self.prep_lists()
