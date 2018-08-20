@@ -1,17 +1,9 @@
+# Setup Logging on Openshift Origin 3.9 Cluster of Service
+
 **This document discusses setting up logging infrastructure in the OpenShift
-cluster. It assumes that you have an OpenShift 3.9.0 cluster already setup.**
+cluster. It assumes that you have an OpenShift 3.9 cluster already setup.**
 
- If you don't have an OpenShift 3.9.0 cluster setup already, you can refer the
-[cluster-upgrade](cluster-upgrade.md) to *install* OpenShift 3.9.0 cluster. To
-install the cluster, just replace the `ansible-playbook` command with below:
-
-```bash
-# check if prerequisites are satisfied for cluster installation
-$ ansible-playbook -i openshift-cluster/hosts.39 /usr/share/ansible/openshift-ansible/playbooks/prerequisites.yml -vvv
-
-# install the cluster
-$ time ansible-playbook -i openshift-cluster/hosts.39 /usr/share/ansible/openshift-ansible/playbooks/deploy_cluster.yml -vvv
-```
+ If you don't have an OpenShift 3.9 cluster setup already, you can refer the installation guide [setup-openshift-372.md](setup-openshift-372.md) to install a 3.9 cluster or if you have a 3.7 cluster use [upgrade-372-390.md](../upgrade-openshift/upgrade-372-390.md) to *upgrade* OpenShift 3.9 cluster.
 
 Logging infrastructure that we're going to setup in our cluster is going to be
 based on EFK (Elasitcsearch - Fluentd - Kibana). OpenShift has this integrated
