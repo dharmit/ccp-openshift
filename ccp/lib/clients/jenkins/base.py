@@ -22,3 +22,18 @@ class OpenshiftJenkinsBaseAPIClient(ApiClient):
                 OpenshiftCmdClient().get_jenkins_service_account_token()
             ),
         )
+
+    def _jenkins_jobs_from_jobs_ordered_list(self, jobs_ordered_list):
+        """
+        Formats query part of url from ordered job list as /job/j1/job/j2
+        :param jobs_ordered_list: The ordered list of jenkins job names, with
+        parent as first and every child below.
+        :return: A string of the form /job/j1/job/j2...
+        """
+        dest = ""
+        for i in jobs_ordered_list:
+            dest = "{}/job/{}".format(
+                dest,
+                i
+            )
+        return dest
