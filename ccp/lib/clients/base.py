@@ -12,7 +12,7 @@ class Client(object):
     pass
 
 
-class ApiClient(Client):
+class APIClient(Client):
     """
     Base class for all clients that query an API Server for information
     """
