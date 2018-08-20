@@ -321,6 +321,7 @@ origin/master of repo https://github.com/navidshaikh/anomaly."""
         from REST API JSON response containing Jenkins job details
         case-2: Upstream project is rebuilt
         """
+
         # trimmed unneeded lines from sample response
         sample_response = {
             "number": 2,
