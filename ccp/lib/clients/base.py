@@ -6,6 +6,9 @@ from ccp.lib.utils import request_url, run_cmd
 
 
 class Client(object):
+    """
+    Base class of all clients
+    """
     pass
 
 
@@ -32,6 +35,13 @@ class ApiClient(Client):
         self.skip_ssl = verify_ssl
 
     def _query(self, target):
+        """
+        Given a target (query without url), queries endpoint and gets data
+        :param target: The query to send to the api server, including after
+        destination
+        :type target str
+        :return:The response object and exception object, if any was raised.
+        """
         query_url = "{}{}".format(
             self.server_endpoint,
             target

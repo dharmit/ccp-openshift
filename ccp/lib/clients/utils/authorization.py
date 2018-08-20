@@ -1,3 +1,6 @@
+"""
+This file contains authorization handlers that take care of adding the header.
+"""
 
 class Authorization(object):
     """

@@ -1,3 +1,7 @@
+"""
+This file contains operational Openshift clients
+"""
+
 from ccp.lib.clients.base import CmdClient
 import ccp.lib.utils
 

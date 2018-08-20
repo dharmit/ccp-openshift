@@ -1,3 +1,7 @@
+"""
+This file contains the base of all jenkins clients
+"""
+
 from ccp.lib.clients.utils.authorization import BearerAuthorization
 from ccp.lib.clients.base import ApiClient
 from ccp.lib.clients.openshift.client import OpenshiftCmdClient

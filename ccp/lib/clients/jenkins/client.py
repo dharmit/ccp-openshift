@@ -1,3 +1,6 @@
+"""
+This file contains ready to use Jenkins Clients.
+"""
 from ccp.lib.clients.jenkins.base import OpenshiftJenkinsBaseAPIClient
 
 
