@@ -28,7 +28,8 @@ def request_url(
 
     try:
         response = requests.get(
-            request, params=params, verify=verify_ssl, headers=headers
+            request, params=params, verify=verify_ssl, headers=headers,
+            auth=auth
         )
     except Exception as ex:
         response = None
