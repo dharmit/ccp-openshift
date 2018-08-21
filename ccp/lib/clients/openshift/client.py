@@ -12,7 +12,8 @@ class OpenshiftCmdClient(CmdClient):
     """
 
     def __init__(self):
-        self.base_cmd = "oc{globalflags} {operation} {what}{which}"
+        self.core_oc_cmd = "oc"
+        self.oc_params = "{globalflags} {operation} {what}{which}"
 
     def get_jenkins_service_account_token(self):
         """
@@ -22,10 +23,14 @@ class OpenshiftCmdClient(CmdClient):
         """
         token = None
         token_cmd = """
-        oc get sa/jenkins --template='{{range .secrets}}{{ .name }} {{end}}' |
-         xargs -n 1 oc get secret --template='{{ if .data.token }}{{ .data.token
-          }}{{end}}' | head -n 1 | base64 -d -
-        """
+        {core_oc_cmd} sa/jenkins --template='{template1}' | xargs -n 1 
+        {core_oc_cmd} get secret --template='{template2}' | head -n 1 | 
+        base64 -d -
+        """.format(
+            core_oc_cmd=self.core_oc_cmd,
+            template1="{{range .secrets}}{{ .name }} {{end}}",
+            template2="{{ if .data.token }}{{ .data.token }}{{end}}'"
+        )
         out, ex = ccp.lib.utils.run_cmd(token_cmd, shell=True, use_pipes=True)
         if ex:
             raise Exception("Failed to get token due to {}".format(ex))
