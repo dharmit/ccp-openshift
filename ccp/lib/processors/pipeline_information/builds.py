@@ -104,7 +104,7 @@ class BuildInfo(JSONQueryProcessor):
         if data_set:
             stage_flow_nodes = data_set.get("stageFlowNodes")
         if data_set and stage_flow_nodes:
-            result = stage_flow_nodes.get("id")
+            result = stage_flow_nodes[0].get("id")
         return result
 
     def get_stage_logs(
@@ -154,7 +154,7 @@ class BuildInfo(JSONQueryProcessor):
                 result = [
                     stage_id,
                     stage_flow_node,
-                    "Test Logs"
+                    test_data_set[2]
                 ]
 
         return result
