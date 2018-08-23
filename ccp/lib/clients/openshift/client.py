@@ -12,24 +12,22 @@ class OpenshiftCmdClient(CmdClient):
     """
 
     def __init__(self):
-        self.core_oc_cmd = "oc"
+        self.core_oc_cmd = "/usr/bin/oc"
         self.oc_params = "{globalflags} {operation} {what}{which}"
 
     def get_jenkins_service_account_token(self):
         """
-        Queries and gets the jenkins token. This assumes you have access to oc
+        Queries and gets the Jenkins token. This assumes you have access to oc
         command line.
-        :return: The token, if it was able to get it.
+        :return: The token, if it was able to get it. Else, it returns None
         """
-        token = None
-        token_cmd = """
-        {core_oc_cmd} sa/jenkins --template='{template1}' | xargs -n 1 
-        {core_oc_cmd} get secret --template='{template2}' | head -n 1 | 
-        base64 -d -
+        token_cmd = """{core_oc_cmd} sa/jenkins --template='{template1}' | \
+        xargs -n 1 {core_oc_cmd} get secret --template='{template2}' | \
+        head -n 1 | base64 -d -\
         """.format(
             core_oc_cmd=self.core_oc_cmd,
             template1="{{range .secrets}}{{ .name }} {{end}}",
-            template2="{{ if .data.token }}{{ .data.token }}{{end}}'"
+            template2="{{ if .data.token }}{{ .data.token }}{{end}}"
         )
         out, ex = ccp.lib.utils.run_cmd(token_cmd, shell=True, use_pipes=True)
         if ex:
@@ -37,7 +35,6 @@ class OpenshiftCmdClient(CmdClient):
         else:
             data, err = out
             if data:
-                token = data
+                return data.strip()
             else:
                 raise Exception("Failed to get token due to {}".format(err))
-        return token

@@ -11,20 +11,21 @@ def request_url(
         request, params=None, verify_ssl=False, auth=None, headers=None
 ):
     """
-    Queries a specified url and returns data, if any
+    Queries a specified URL and returns data, if any
     :param request: The url to send the request to.
     :type request str
     :param params: Any params that are to be passed on to the request
-    :param verify_ssl: IF true, ssl errors are ignored
+    :type params dict
+    :param verify_ssl: IF False, ssl errors are ignored.
     :type verify_ssl bool
-    :param auth: This will be passed along to requests as is.
+    :param auth: This will be passed along to requests as is. Note: Passing
+    auth overrides any Authorization headers passed already.
     :type auth dict
     :param headers: Any extra headers that you wish to pass along.
     :type headers dict
-    :return: The response object, or None upon failure, alongwith exception
-    message, if any or None
+    :raises Exception
+    :return: The response object, or None upon failure, if any or None
     """
-    exception = None
 
     try:
         response = requests.get(
@@ -33,51 +34,64 @@ def request_url(
         )
     except Exception as ex:
         response = None
-        exception = ex
+        raise ex
 
-    return response, exception
+    return response
 
 
 def encode(data):
+    """
+    Applyies base64 encoding to passed string
+    :param data: The string to encode
+    :type data str
+    :return: Encoded string.
+    """
     return base64.b64encode(data)
 
 
 def decode(data):
+    """
+    Decodes a base64 encoded string.
+    :param data: The encoded string to decode
+    :return: The decoded string
+    """
     return base64.b64decode(data)
 
 
-def run_cmd(cmd, shell=False, use_pipes=True):
+def run_cmd(cmd, shell=False, use_pipes=False):
     """
     Runs the command that is passed to it via subprocess.Popen
     :param cmd: The command that needs to be executed
+    :type cmd str or list
     :param shell: Default False, not recommended but for cases when needed
-    :param use_pipes: Default true. If true, uses pipes to store the output
+    :type shell bool
+    :param use_pipes: Default False. If true, uses pipes to store the output
     instead of printing on screen.
-    :return: Returns 2 objects, the first a tuple containing output and error
-    message of executed command, if use_pipes=True, and the second which is
-    exception object if any was raised during command execution.
+    :type use_pipes bool
+    :raises Exception
+    :return: Returns  a tuple containing output and error.
     """
-    out = None
-    exception = None
     try:
         p = subprocess.Popen(
             cmd, shell=shell, stdout=subprocess.PIPE, stderr=subprocess.PIPE
         ) if use_pipes else subprocess.Popen(cmd, shell=shell)
+        p.wait()
         out = p.communicate()
     except Exception as ex:
-        exception = ex
-    return out, exception
+        raise ex
+    return out
 
 
 def json_to_python(data):
     """
     Parses the json and loads the data
     :param data:
+    :raises Exception
     :return:
     """
     p = None
     try:
         json.loads(data)
-    except Exception:
-        pass
+    except Exception as ex:
+        raise ex
     return p

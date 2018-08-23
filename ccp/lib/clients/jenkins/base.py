@@ -14,28 +14,37 @@ class OpenshiftJenkinsBaseAPIClient(APIClient):
 
     def __init__(
             self,
-            server="localhost",
+            server,
             port=None
     ):
+        """
+        Initialize Openshift Jenkins Client
+        :param server: The URL/IP of jenkins server on openshift.
+        :type server str
+        :param port: Default None: The port, if any.
+        :type port: str
+        """
+        jenkins_sa_token = OpenshiftCmdClient().\
+            get_jenkins_service_account_token()
+        authorization = BearerAuthorization(token=jenkins_sa_token)
         super(OpenshiftJenkinsBaseAPIClient, self).__init__(
+            server=server,
             secure=False,
             verify_ssl=False,
-            server=server,
             port=port,
-            authorization=BearerAuthorization(
-                OpenshiftCmdClient().get_jenkins_service_account_token()
-            ),
+            authorization=authorization,
         )
 
-    def _jenkins_jobs_from_jobs_ordered_list(self, jobs_ordered_list):
+    def _jenkins_jobs_from_jobs_ordered_list(self, nested_job_ordered_list):
         """
-        Formats query part of url from ordered job list as /job/j1/job/j2
-        :param jobs_ordered_list: The ordered list of jenkins job names, with
-        parent as first and every child below.
+        Formats query part of URL from ordered job list as /job/j1/job/j2
+        :param nested_job_ordered_list: The ordered list of jenkins job names,
+        with parent as first and every child below.
+        :type nested_job_ordered_list list
         :return: A string of the form /job/j1/job/j2...
         """
         dest = ""
-        for i in jobs_ordered_list:
+        for i in nested_job_ordered_list:
             dest = "{}/job/{}".format(
                 dest,
                 i
