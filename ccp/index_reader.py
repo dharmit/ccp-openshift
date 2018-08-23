@@ -240,7 +240,8 @@ class BuildConfigManager(object):
         """
         Applies the build job template that creates pipeline to build
         image, and trigger first time build as well.
-        :param project: The name of project, where the template is to be applied
+        :param project: The name of project, where the template is to be
+                        applied
         :param template_location: The location of the template file.
         """
         oc_process = "oc process -f {0} {1}".format(
@@ -366,14 +367,29 @@ class Index(object):
             registry_url, namespace, from_address, smtp_server)
         self.infra_projects = ["seed-job"]
 
-    def find_stale_jobs(self, oc_projects, index_projects):
+    def find_stale_jobs(self,
+                        oc_projects, index_projects,
+                        exception_jobs=["ci-job"]):
         """
         Given oc projects and index projects, figure out stale
-        projects and return
+        projects and return.
+        This method also has provision to take take exception lists.
+        The exception list has names of projects which will be removed
+        from found stale jobs and won't be removed from OpenShift.
+        The desired target for exception list is for: ci-job
+
         """
         # diff existing oc projects from index projects
 
-        return list(set(oc_projects) - set(index_projects))
+        stale_jobs = list(set(oc_projects) - set(index_projects))
+
+        if stale_jobs:
+            # remove the exception list from found stale jobs
+            print ("Removing exception job(s) {} from found stale jobs, "
+                   "mentioned jobs won't be removed OpenShift..".format(
+                       exception_jobs))
+            return list(set(stale_jobs) - set(exception_jobs))
+        return stale_jobs
 
     def run(self):
         """
