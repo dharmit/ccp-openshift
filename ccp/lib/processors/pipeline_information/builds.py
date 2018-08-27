@@ -92,7 +92,7 @@ class BuildInfo(JSONQueryProcessor):
         :param ordered_job_list: The ordered list of jobs, with parents,
         followed by children
         :param build_number: The id of the build.
-        :param node_number: The number of the node, this is ussually the stage
+        :param node_number: The number of the node, this is usually the stage
         id got from get_stage_id
         :param test_data_set: data set to be used for test run.
         :return: The id of the stage flow node, None on failure
@@ -119,7 +119,6 @@ class BuildInfo(JSONQueryProcessor):
     ):
         """
         Gets the logs of a particular stage of a particular build of a project.
-        Note DO NOT USE THIS for scan stage.
         :param ordered_job_list: The ordered list of jobs, with parents,
         followed by children
         :type ordered_job_list list
@@ -168,5 +167,3 @@ class BuildInfo(JSONQueryProcessor):
                 ]
 
         return result
-
-    # TODO write get logs function for scan stages
