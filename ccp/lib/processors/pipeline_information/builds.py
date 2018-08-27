@@ -35,7 +35,8 @@ class BuildInfo(JSONQueryProcessor):
         """
         if not self.test:
             data_set = self.get_data_from_response(
-                self.jenkins_client.get_build_runs(ordered_job_list)
+                self.jenkins_client.get_build_runs(ordered_job_list),
+                bad_json=True
             )
         else:
             data_set = test_data_set
@@ -69,7 +70,8 @@ class BuildInfo(JSONQueryProcessor):
             data_set = self.get_data_from_response(
                 self.jenkins_client.describe_build_run(
                     ordered_job_list, build_number=build_number
-                )
+                ),
+                bad_json=True
             )
         else:
             data_set = test_data_set
@@ -103,7 +105,8 @@ class BuildInfo(JSONQueryProcessor):
             data_set = self.get_data_from_response(
                 self.jenkins_client.describe_execution_node(
                     ordered_job_list, build_number, node_number
-                )
+                ),
+                bad_json=True
             )
         else:
             data_set = test_data_set
@@ -157,7 +160,8 @@ class BuildInfo(JSONQueryProcessor):
                     self.jenkins_client.get_logs_of_execution_node(
                         ordered_job_list, build_number=build_number,
                         node_number=stage_flow_node
-                    )
+                    ),
+                    bad_json=True
                 )
             else:
                 result = [
