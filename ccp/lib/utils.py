@@ -92,7 +92,7 @@ def json_to_python(data):
     """
     p = None
     try:
-        json.loads(data)
+        p = json.loads(data)
     except Exception as ex:
         raise ex
     return p
