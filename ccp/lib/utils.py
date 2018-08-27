@@ -5,6 +5,7 @@ import json
 import base64
 import subprocess
 import requests
+import ast
 
 
 def request_url(
@@ -95,3 +96,17 @@ def json_to_python(data):
     except Exception as ex:
         raise ex
     return p
+
+
+def parse_literals(data):
+    """
+    Parses literal, use to parse of string contains
+    quotes.
+    """
+    p = None
+    try:
+        p = ast.literal_eval(data)
+    except Exception as ex:
+        raise ex
+    return p
+
