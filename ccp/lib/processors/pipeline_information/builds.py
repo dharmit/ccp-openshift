@@ -160,14 +160,13 @@ class BuildInfo(JSONQueryProcessor):
                     self.jenkins_client.get_logs_of_execution_node(
                         ordered_job_list, build_number=build_number,
                         node_number=stage_flow_node
-                    ),
-                    bad_json=True
-                )
+                    )
+                ).get("text")
             else:
                 result = [
                     stage_id,
                     stage_flow_node,
-                    test_data_set[2]
+                    test_data_set[2].get("text")
                 ]
 
         return result

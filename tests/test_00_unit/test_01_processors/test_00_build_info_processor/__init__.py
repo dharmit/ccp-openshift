@@ -190,7 +190,9 @@ class TestBuildInfo(unittest.TestCase):
                     }
                 ]
             },
-            self.test_logs
+            {
+                "text": self.test_logs
+            }
         ]
         # Note this will not test actual result which would be the logs
         # themselves, but for test purposes, for now assumes that logs are
