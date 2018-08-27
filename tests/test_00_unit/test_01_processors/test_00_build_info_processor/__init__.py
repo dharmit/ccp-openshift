@@ -19,6 +19,9 @@ class TestBuildInfo(unittest.TestCase):
         self.test_build_number = "1"
         self.test_node_number = "2"
         self.test_stage_flow_node_number = "3"
+        self.test_stage_flow_node_numbers = [
+            "3"
+        ]
         self.test_stage_name = "Test Stage"
         self.test_logs = "Test logs"
 
@@ -123,13 +126,13 @@ class TestBuildInfo(unittest.TestCase):
         }
 
         self.assertEquals(
-            self.build_info.get_stage_flow_node_id(
+            self.build_info.get_stage_flow_node_ids(
                 self.ordered_project_list,
                 self.test_build_number,
                 self.test_node_number,
                 test_data_set=test_data_set
             ),
-            self.test_stage_flow_node_number,
+            self.test_stage_flow_node_numbers,
             "Both are equal"
         )
 
@@ -206,7 +209,7 @@ class TestBuildInfo(unittest.TestCase):
             ),
             [
                 self.test_node_number,
-                self.test_stage_flow_node_number,
+                self.test_stage_flow_node_numbers,
                 self.test_logs
             ]
         )

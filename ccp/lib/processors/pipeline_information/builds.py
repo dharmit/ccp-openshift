@@ -29,7 +29,7 @@ class BuildInfo(JSONQueryProcessor):
         followed by children
         :type ordered_job_list list
         :param test_data_set: data set to be used for test run.
-        :type test_data_set dict
+        :type test_data_set list
         :return: A number representing number of builds in a job.This number
         will also be id of latest build. -1 is returned on failure.
         """
@@ -84,7 +84,7 @@ class BuildInfo(JSONQueryProcessor):
                     break
         return result
 
-    def get_stage_flow_node_id(
+    def get_stage_flow_node_ids(
             self, ordered_job_list, build_number, node_number,
             test_data_set=None
     ):
@@ -97,10 +97,11 @@ class BuildInfo(JSONQueryProcessor):
         :param node_number: The number of the node, this is usually the stage
         id got from get_stage_id
         :param test_data_set: data set to be used for test run.
-        :return: The id of the stage flow node, None on failure
+        :return: The ids of the stage flow nodes, None on failure
         """
         result = None
         stage_flow_nodes = None
+        stage_flow_node_ids = []
         if not self.test:
             data_set = self.get_data_from_response(
                 self.jenkins_client.describe_execution_node(
@@ -113,7 +114,11 @@ class BuildInfo(JSONQueryProcessor):
         if data_set:
             stage_flow_nodes = data_set.get("stageFlowNodes")
         if data_set and stage_flow_nodes:
-            result = stage_flow_nodes[0].get("id")
+            for item in stage_flow_nodes:
+                stage_flow_node_ids.append(
+                    item.get("id")
+                )
+            result = stage_flow_node_ids
         return result
 
     def get_stage_logs(
@@ -133,7 +138,7 @@ class BuildInfo(JSONQueryProcessor):
         :return: A string containing the logs. None is returned on failure
         """
         result = None
-        stage_flow_node = None
+        stage_flow_nodes = None
         if not self.test:
             stage_id = self.get_stage_id(
                 ordered_job_list, build_number=build_number, stage=stage,
@@ -145,29 +150,37 @@ class BuildInfo(JSONQueryProcessor):
             )
         if stage_id:
             if not self.test:
-                stage_flow_node = self.get_stage_flow_node_id(
+                stage_flow_nodes = self.get_stage_flow_node_ids(
                     ordered_job_list, build_number=build_number,
                     node_number=stage_id
                 )
             else:
-                stage_flow_node = self.get_stage_flow_node_id(
+                stage_flow_nodes = self.get_stage_flow_node_ids(
                     ordered_job_list, build_number=build_number,
                     node_number=stage_id, test_data_set=test_data_set[1]
                 )
-        if stage_flow_node:
+        if stage_flow_nodes:
             if not self.test:
-                r = self.get_data_from_response(
-                    self.jenkins_client.get_logs_of_execution_node(
-                        ordered_job_list, build_number=build_number,
-                        node_number=stage_flow_node
+                result = []
+                for n in stage_flow_nodes:
+                    r = self.get_data_from_response(
+                        self.jenkins_client.get_logs_of_execution_node(
+                            ordered_job_list, build_number=build_number,
+                            node_number=n
+                        )
                     )
-                )
-                if r:
-                    result = r.get("text")
+                    if r:
+                        result.append(
+                            {
+                                "log": r.get("text"),
+                                "name": r.get("name"),
+                                "description": r.get("parameterDescription")
+                            }
+                        )
             else:
                 result = [
                     stage_id,
-                    stage_flow_node,
+                    stage_flow_nodes,
                     test_data_set[2].get("text")
                 ]
 
