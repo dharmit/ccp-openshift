@@ -29,8 +29,11 @@ class JSONQueryProcessor(QueryProcessor):
         """
         data = None
         if response:
-            if not  bad_json:
-                data = json_to_python(response.text)
+            if not bad_json:
+                try:
+                    data = json_to_python(response.text)
+                except Exception:
+                    data = parse_literals(response.text)
             else:
                 data = parse_literals(response.text)
         return data

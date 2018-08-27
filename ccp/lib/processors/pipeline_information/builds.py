@@ -156,12 +156,14 @@ class BuildInfo(JSONQueryProcessor):
                 )
         if stage_flow_node:
             if not self.test:
-                result = self.get_data_from_response(
+                r = self.get_data_from_response(
                     self.jenkins_client.get_logs_of_execution_node(
                         ordered_job_list, build_number=build_number,
                         node_number=stage_flow_node
                     )
-                ).get("text")
+                )
+                if r:
+                    result = r.get("text")
             else:
                 result = [
                     stage_id,
