@@ -33,8 +33,7 @@ class OpenshiftCmdClient(CmdClient):
         if ex:
             raise Exception("Failed to get token due to {}".format(ex))
         else:
-            data, err = out
-            if data:
-                return data.strip()
-            else:
-                raise Exception("Failed to get token due to {}".format(err))
+            if out:
+                return out.strip()
+            return None
+
