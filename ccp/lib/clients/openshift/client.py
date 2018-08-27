@@ -21,7 +21,7 @@ class OpenshiftCmdClient(CmdClient):
         command line.
         :return: The token, if it was able to get it. Else, it returns None
         """
-        token_cmd = """{core_oc_cmd} sa/jenkins --template='{template1}' | \
+        token_cmd = """{core_oc_cmd} get sa/jenkins --template='{template1}' | \
         xargs -n 1 {core_oc_cmd} get secret --template='{template2}' | \
         head -n 1 | base64 -d -\
         """.format(
