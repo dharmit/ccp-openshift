@@ -61,6 +61,11 @@ class Engine(object):
         )
 
         self.args = parser.parse_args()
+        self.jenkins_server = self.args.jenkinsserver
+        if not self.jenkins_server:
+            raise Exception(
+                "Could not extract information about jenkins server"
+            )
 
     def handle_builds(self):
         what = self.args.what
@@ -97,7 +102,6 @@ class Engine(object):
             print(data)
 
     def _run_handler(self, obj):
-        self.jenkins_server = self.args.jenkinsserver
 
         h = self._handlers.get(
             obj,
