@@ -127,6 +127,53 @@ class BuildInfo(JSONQueryProcessor):
 
         return result
 
+    def get_stage_name(
+            self, ordered_job_list, build_number, stage_id, id_is_number=False,
+            test_data_set=None
+    ):
+        """
+        Gets the stage name, of a particular stage in a particular build of a
+        project
+        :param ordered_job_list: The ordered list of jobs, with parents,
+        followed by children
+        :type ordered_job_list list
+        :param build_number: The id of the build.
+        :type build_number str
+        :param stage_id: The id/number of the pipeline stage of the build
+        :type stage_id str
+        :param id_is_number: Default is false, if True, stage id is treated as
+        stage number
+        :type id_is_number bool
+        :param test_data_set: data set to be used for test run.
+        :type test_data_set dict
+        :raises Exception
+        :return: The id of the stage, in build build_id in project
+        ordered_job_list. None is returned on failure
+        """
+        result = None
+        stages = None
+        if not self.test:
+            data_set = self.get_data_from_response(
+                self.jenkins_client.describe_build_run(
+                    ordered_job_list, build_number=build_number
+                ),
+                bad_json=True
+            )
+        else:
+            data_set = test_data_set
+        if data_set:
+            stages = data_set.get("stages")
+        if data_set and stages:
+            if not id_is_number:
+                for item in stages:
+                    if item.get("id") == stage_id:
+                        result = item.get("name")
+                        break
+            else:
+                result = stages[int(stage_id)-1].get("name")
+
+        return result
+
     def get_stage_flow_node_ids(
             self, ordered_job_list, build_number, node_number,
             test_data_set=None
