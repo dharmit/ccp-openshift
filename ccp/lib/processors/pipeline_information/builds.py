@@ -47,7 +47,8 @@ class BuildInfo(JSONQueryProcessor):
         return count
 
     def get_stage_id(
-            self, ordered_job_list, build_number, stage, test_data_set=None
+            self, ordered_job_list, build_number, stage, stage_is_name=True,
+            test_data_set=None
     ):
         """
         Gets the stage id, of a particular stage in a particular build of a
@@ -59,8 +60,12 @@ class BuildInfo(JSONQueryProcessor):
         :type build_number str
         :param stage: The name of the pipeline stage of the build
         :type stage str
+        :param stage_is_name: Default True, if true, stage is treated as name
+        of stage, else it is treaded as stage number
+        :type stage_is_name bool
         :param test_data_set: data set to be used for test run.
         :type test_data_set dict
+        :raises Exception
         :return: The id of the stage, in build build_id in project
         ordered_job_list. None is returned on failure
         """
@@ -78,10 +83,14 @@ class BuildInfo(JSONQueryProcessor):
         if data_set:
             stages = data_set.get("stages")
         if data_set and stages:
-            for item in stages:
-                if item.get("name") == stage:
-                    result = item.get("id")
-                    break
+            if stage_is_name:
+                for item in stages:
+                    if item.get("name") == stage:
+                        result = item.get("id")
+                        break
+            else:
+                result = stages[int(stage)-1].get("id")
+
         return result
 
     def get_stage_flow_node_ids(
