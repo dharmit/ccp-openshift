@@ -8,6 +8,9 @@ class Engine(object):
         self.args = None
         self.jenkins_server = None
         self.init_parser()
+        self._handlers = {
+            "build": self.handle_builds()
+        }
 
     def init_parser(self):
         parser = argparse.ArgumentParser(
@@ -41,14 +44,19 @@ class Engine(object):
             help="Provide the id of the build, whole logs you want",
         )
         build_subcommand.add_argument(
-            "-s", "--stage",
+            "--stagename",
             help="Provide the name of the stage."
+        )
+        build_subcommand.add_argument(
+            "--stagenumber",
+            help="Provide the number of the stage."
         )
         build_subcommand.add_argument(
             "what",
             default="logs",
             choices=[
-                "logs"
+                "logs",
+                "stage-count"
             ]
         )
 
@@ -60,14 +68,16 @@ class Engine(object):
         build_info = BuildInfo(jenkins_server=self.jenkins_server)
         if what == "logs":
             buildid = self.args.buildid
-            stage = self.args.stage
+            stage = self.args.stagename or self.args.stagenumber
+            stage_is_name = not self.args.stagenumber
             if not buildid or not stage:
                 print("Missing buildid or stage needed to fetch logs")
                 return
             logs_info = build_info.get_stage_logs(
                 ordered_job_list=job,
                 build_number=buildid,
-                stage=stage
+                stage=stage,
+                stage_is_name=stage_is_name
             )
             data = ""
             for item in logs_info:
@@ -86,13 +96,10 @@ class Engine(object):
                 )
             print(data)
 
-    def run_handler(self, obj):
+    def _run_handler(self, obj):
         self.jenkins_server = self.args.jenkinsserver
-        handlers = {
-            "build": self.handle_builds()
-        }
 
-        h = handlers.get(
+        h = self._handlers.get(
             obj,
             lambda: None
         )
@@ -100,7 +107,7 @@ class Engine(object):
             h()
 
     def run(self):
-        self.run_handler(self.args.object)
+        self._run_handler(self.args.object)
 
 
 if __name__ == '__main__':
