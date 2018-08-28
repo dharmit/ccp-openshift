@@ -165,7 +165,7 @@ class BuildInfo(JSONQueryProcessor):
         return result
 
     def get_stage_logs(
-            self, ordered_job_list, build_number, stage,
+            self, ordered_job_list, build_number, stage, stage_is_name=True,
             test_data_set=None
     ):
         """
@@ -177,6 +177,9 @@ class BuildInfo(JSONQueryProcessor):
         :type build_number str
         :param stage: The name of the stage whole logs are to be fetched
         :type stage str
+        :param stage_is_name : Default True, if true, stage is treated as name
+        of stage, else it is treaded as stage number
+        :type stage_is_name bool
         :param test_data_set: data set to be used for test run.
         :return: A string containing the logs. None is returned on failure
         """
@@ -185,6 +188,7 @@ class BuildInfo(JSONQueryProcessor):
         if not self.test:
             stage_id = self.get_stage_id(
                 ordered_job_list, build_number=build_number, stage=stage,
+                stage_is_name=stage_is_name
             )
         else:
             stage_id = self.get_stage_id(
