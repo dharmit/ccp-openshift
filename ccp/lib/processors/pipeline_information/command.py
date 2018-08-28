@@ -15,12 +15,24 @@ class Engine(object):
     def __init__(self):
         self.args = None
         self.jenkins_server = None
-        self.init_parser()
+        self._handlers = None
+        self._build_handlers = None
+        self._init_parser()
+        self._init_handlers()
+
+    def _init_handlers(self):
+        """
+        Initializes the handlers
+        """
         self._handlers = {
-            "build": self.handle_builds()
+            "build": self._handle_builds()
+        }
+        self._build_handlers = {
+            "stage-count": self._handle_build_stage_count(),
+            "stage-logs": self._handle_build_stage_logs()
         }
 
-    def init_parser(self):
+    def _init_parser(self):
         """
         Initialises the argument parser and parses arguments.
         """
@@ -66,7 +78,7 @@ class Engine(object):
             "what",
             default="logs",
             choices=[
-                "logs",
+                "stage-logs",
                 "stage-count"
             ]
         )
@@ -78,51 +90,73 @@ class Engine(object):
                 "Could not extract information about jenkins server"
             )
 
-    def handle_builds(self):
+    def _handle_build_stage_logs(self):
         """
-        Handles all operations related to build sub-command
+        Handles getting build stage logs
+        :return: The output to be printed
         """
-        what = self.args.what
-        job = self.args.job
         out = ""
+        job = self.args.job
         build_info = BuildInfo(jenkins_server=self.jenkins_server)
-        if what == "logs":
-            buildid = self.args.buildid
-            stage = self.args.stagename or self.args.stagenumber
-            stage_is_name = bool(self.args.stagename)
-            if not buildid or not stage:
-                print("Missing buildid or stage needed to fetch logs")
-                return
-            logs_info = build_info.get_stage_logs(
-                ordered_job_list=job,
-                build_number=buildid,
-                stage=stage,
-                stage_is_name=stage_is_name
+        buildid = self.args.buildid
+        stage = self.args.stagename or self.args.stagenumber
+        stage_is_name = bool(self.args.stagename)
+        if not buildid or not stage:
+            print("Missing buildid or stage needed to fetch logs")
+            return
+        logs_info = build_info.get_stage_logs(
+            ordered_job_list=job,
+            build_number=buildid,
+            stage=stage,
+            stage_is_name=stage_is_name
+        )
+        for item in logs_info:
+            log = item.get('log')
+            name = item.get('name')
+            description = item.get('description')
+            out = "{}{}{}{}\n".format(
+                out,
+                "" if not name else "Name : {}\n".format(
+                    name
+                ),
+                "" if not description else "Description: {}\n".format(
+                    description
+                ),
+                log if log else "No Logs"
             )
-            for item in logs_info:
-                log = item.get('log')
-                name = item.get('name')
-                description = item.get('description')
-                out = "{}{}{}{}\n".format(
-                    out,
-                    "" if not name else "Name : {}\n".format(
-                        name
-                    ),
-                    "" if not description else "Description: {}\n".format(
-                        description
-                    ),
-                    log if log else "No Logs"
-                )
-        elif what == "stage-count":
-            buildid = self.args.buildid
-            if not buildid:
-                print ("Need build number to fetch stages of")
-                return
+        return out
+
+    def _handle_build_stage_count(self):
+        """
+        Handles getting build stage count
+        :return: The output to be printed
+        """
+        job = self.args.job
+        build_info = BuildInfo(jenkins_server=self.jenkins_server)
+        buildid = self.args.buildid
+        if not buildid:
+            out = "Need build number to fetch stages of"
+
+        else:
             out = build_info.get_stage_count(
                 ordered_job_list=job,
                 build_number=buildid
             )
-        print(out)
+        return out
+
+    def _handle_builds(self):
+        """
+        Handles all operations related to build sub-command
+        """
+        what = self.args.what
+        h = self._build_handlers.get(
+            what,
+            lambda: None
+        )
+
+        if h:
+            out = h()
+            print(out)
 
     def _run_handler(self, obj):
         """
