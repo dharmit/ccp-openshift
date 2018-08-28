@@ -14,20 +14,35 @@ class BaseNotify(object):
     """
 
     def __init__(self):
+        # container build success/failure subject lines
         self.build_success_subj = \
             "[registry.centos.org] SUCCESS: Container build {}"
         self.build_failure_subj = \
             "[registry.centos.org] FAILED: Container build {}"
+        # weekly scan success/failure subject lines
+        self.weekly_success_subj = "SUCCESS: Weekly scan for {} is complete"
+        self.weekly_failure_subj = "FAILED: Weekly scan for {} has failed"
 
+        # for build success notifications
         self.build_success_body = """\
 {0:<30}{1}
 {2:<30}{3}
 {4:<30}{5}"""
 
+        # for build failure notifications
         self.build_failure_body = """\
 {0:<30}{1}
 {2:<30}{3}"""
 
+        # for weekly scan success/failure case
+        self.weekly_body = """\
+{0: <20}{1}
+{2: <20}{3}"""
+
+        # for weekly scan failure case when image is absent in registry
+        self.weekly_image_absent_body = "{0: <20}{1}"
+
+        # email footer to be added in all types of notifications
         self.email_footer = """\
 --
 Do you have a query?

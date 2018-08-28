@@ -83,25 +83,29 @@ objects:
                         }
                     }
                     finally {
+                      stage("Notify user"){
+                        dir("${PIPELINE_REPO_DIR}") {
+                          git url: '${PIPELINE_REPO}', branch: '${PIPELINE_BRANCH}'
+                          }
+
                         if (image_in_registry==true) {
-                            if (success==true) {
-                                sh "echo -e 'Weekly scan for ${image_name_with_registry} was successful' | mail -r ${FROM_ADDRESS} -S smtp=${SMTP_SERVER} -s 'SUCCESS: Weekly scan for ${image_name_with_registry} is complete' ${NOTIFY_EMAIL} "
-                            } else {
-                                sh "echo -e 'Weekly scan for ${image_name_with_registry} was unsuccessful' | mail -r ${FROM_ADDRESS} -S smtp=${SMTP_SERVER} -s 'FAILED: Weekly scan ${image_name_with_registry} has failed' ${NOTIFY_EMAIL} "
-                            }
+                          if (success==true) {
+                            sh "cd ${PIPELINE_REPO_DIR} && ls && ls ccp &&PYTHONPATH=${PIPELINE_REPO_DIR} python ccp/notifications/weeklynotify.py success cccp `oc get route jenkins -o template --template={{.spec.host}}` ${image_name} ${BUILD_NUMBER}"
+                          } else {
+                            sh "cd ${PIPELINE_REPO_DIR} && PYTHONPATH=${PIPELINE_REPO_DIR} python ccp/notifications/weeklynotify.py failure cccp `oc get route jenkins -o template --template={{.spec.host}}` ${image_name} ${BUILD_NUMBER}"
+                          }
                         } else {
-                          sh "echo -e 'Weekly scan for ${image_name} was unsuccessful as image not in registry' | mail -r ${FROM_ADDRESS} -S smtp=${SMTP_SERVER} -s 'FAILED: Weekly scan ${image_name} has failed, as image not in registry' ${NOTIFY_EMAIL} "
-                        }
+                            sh "cd ${PIPELINE_REPO_DIR} && PYTHONPATH=${PIPELINE_REPO_DIR} python ccp/notifications/weeklynotify.py image_absent cccp `oc get route jenkins -o template --template={{.spec.host}}` ${image_name} ${BUILD_NUMBER}"
+                          }
+                      }
                     }
+                  }
                 }
-            }
           env:
           - name: NOTIFY_EMAIL
             value: ${NOTIFY_EMAIL}
           - name: REGISTRY_URL
             value: ${REGISTRY_URL}
-          - name: IMAGE_NAME
-            value: ${IMAGE_NAME}
           - name: PIPELINE_NAME
             value: ${PIPELINE_NAME}
           - name: APP_ID
@@ -110,6 +114,13 @@ objects:
             value: ${JOB_ID}
           - name: DESIRED_TAG
             value: ${DESIRED_TAG}
+          - name: FROM_ADDRESS
+            value: ${FROM_ADDRESS}
+          - name: SMTP_SERVER
+            value: ${SMTP_SERVER}
+          - name: PIPELINE_REPO_DIR
+            value: ${PIPELINE_REPO_DIR}
+
 parameters:
 - description: Email to send notification to
   displayName: Notification email
@@ -142,6 +153,11 @@ parameters:
   displayName: SMTP server address
   name: SMTP_SERVER
   required: true
+- description: Directory where Pipeline service code is to be cloned
+  displayName: Pipeline repo directory
+  name: PIPELINE_REPO_DIR
+  required: true
+  value: /tmp/pipeline-service
 - description: Repository containing CentOS Container Pipeline service code
   displayName: Pipeline service repo
   name: PIPELINE_REPO
@@ -150,4 +166,3 @@ parameters:
   displayName: Pipeline branch
   name: PIPELINE_BRANCH
   required: true
-  value: master
