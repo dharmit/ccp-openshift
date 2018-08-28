@@ -75,7 +75,7 @@ class Engine(object):
         if what == "logs":
             buildid = self.args.buildid
             stage = self.args.stagename or self.args.stagenumber
-            stage_is_name = not self.args.stagenumber
+            stage_is_name = bool(self.args.stagename)
             if not buildid or not stage:
                 print("Missing buildid or stage needed to fetch logs")
                 return
