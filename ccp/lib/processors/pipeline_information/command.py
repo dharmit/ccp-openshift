@@ -7,6 +7,27 @@ from ccp.lib.processors.pipeline_information.builds import BuildInfo
 import argparse
 
 
+def _run_handler(key, handlers, lmd=None):
+    """
+
+    :param key: The key to filter the handler
+    :param handlers: The dict containing the string and handler function as key
+    and value
+    :type handlers dict
+    :param lmd: Default None, the lambda, what should happen if it does not
+    match
+    :return: The return of the call of handler, if it can get it or None
+    """
+    h = handlers.get(
+        key,
+        lambda : lmd
+    )
+    if h:
+        return h()
+    else:
+        return None
+
+
 class Engine(object):
     """
     The engine is the one that parses the arguments and takes action on them.
@@ -15,22 +36,7 @@ class Engine(object):
     def __init__(self):
         self.args = None
         self.jenkins_server = None
-        self._handlers = None
-        self._build_handlers = None
         self._init_parser()
-        self._init_handlers()
-
-    def _init_handlers(self):
-        """
-        Initializes the handlers
-        """
-        self._handlers = {
-            "build": self._handle_builds()
-        }
-        self._build_handlers = {
-            "stage-count": self._handle_build_stage_count(),
-            "stage-logs": self._handle_build_stage_logs()
-        }
 
     def _init_parser(self):
         """
@@ -149,33 +155,34 @@ class Engine(object):
         Handles all operations related to build sub-command
         """
         what = self.args.what
-        h = self._build_handlers.get(
-            what,
-            lambda: None
+        out = _run_handler(
+            key=what,
+            handlers={
+                "stage-count": self._handle_build_stage_count,
+                "stage-logs": self._handle_build_stage_logs
+            }
+        )
+        print(
+            out if out else "Could not get the requested information"
         )
 
-        if h:
-            out = h()
-            print(out)
-
-    def _run_handler(self, obj):
+    def _handle_object(self, obj):
         """
-        Runs the appropriate sub command handler
-        :param obj: The sub command
+        Runs the appropriate sub command handler (object to handle)
+        :param obj: The name of object.
         """
-
-        h = self._handlers.get(
-            obj,
-            lambda: None
+        _run_handler(
+            key=obj,
+            handlers={
+                "build": self._handle_builds
+            }
         )
-        if h:
-            h()
 
     def run(self):
         """
         Run the engine
         """
-        self._run_handler(self.args.object)
+        self._handle_object(self.args.object)
 
 
 if __name__ == '__main__':
