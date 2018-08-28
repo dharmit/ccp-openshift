@@ -70,6 +70,7 @@ class Engine(object):
     def handle_builds(self):
         what = self.args.what
         job = self.args.job
+        out = ""
         build_info = BuildInfo(jenkins_server=self.jenkins_server)
         if what == "logs":
             buildid = self.args.buildid
@@ -84,13 +85,12 @@ class Engine(object):
                 stage=stage,
                 stage_is_name=stage_is_name
             )
-            data = ""
             for item in logs_info:
                 log = item.get('log')
                 name = item.get('name')
                 description = item.get('description')
-                data = "{}{}{}{}\n".format(
-                    data,
+                out = "{}{}{}{}\n".format(
+                    out,
                     "" if not name else "Name : {}\n".format(
                         name
                     ),
@@ -99,7 +99,16 @@ class Engine(object):
                     ),
                     log if log else "No Logs"
                 )
-            print(data)
+        elif what == "stage-count":
+            buildid = self.args.buildid
+            if not buildid:
+                print ("Need build number to fetch stages of")
+                return
+            out = build_info.get_stage_count(
+                ordered_job_list=job,
+                build_number=buildid
+            )
+        print(out)
 
     def _run_handler(self, obj):
 
