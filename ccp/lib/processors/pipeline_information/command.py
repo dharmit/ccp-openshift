@@ -84,6 +84,7 @@ class Engine(object):
             "what",
             default="logs",
             choices=[
+                "logs",
                 "stage-logs",
                 "stage-count"
             ]
@@ -150,6 +151,51 @@ class Engine(object):
             )
         return out
 
+    def _handle_build_logs(self):
+        """
+        Fetches entire log collection
+        :return: The output to be printed
+        """
+        job = self.args.job
+        build_info = BuildInfo(jenkins_server=self.jenkins_server)
+        buildid = self.args.buildid
+        if not buildid:
+            out = "Need build number to fetch stages of"
+        else:
+            build_logs = build_info.get_build_logs(
+                ordered_job_list=job, build_number=buildid
+            )
+            out = ""
+            if build_logs:
+                for stage_info in build_logs:
+                    logs = ""
+                    logs_info = stage_info.get("logs")
+                    if logs_info:
+                        for item in logs_info:
+                            log = item.get('log')
+                            name = item.get('name')
+                            description = item.get('description')
+                            logs = "{}{}{}{}\n".format(
+                                logs,
+                                "" if not name else "Name : {}\n".format(
+                                    name
+                                ),
+                                "" if not description else
+                                "Description: {}\n".format(
+                                    description
+                                ),
+                                log if log else "No Logs"
+                            )
+                    else:
+                        logs = "No logs could be fetched. might be a parent" \
+                               " stage\n"
+                    out = "{}STAGE : {}\n{}\n".format(
+                        out,
+                        stage_info.get("name"),
+                        logs
+                    )
+        return out
+
     def _handle_builds(self):
         """
         Handles all operations related to build sub-command
@@ -158,6 +204,7 @@ class Engine(object):
         out = _run_handler(
             key=what,
             handlers={
+                "logs": self._handle_build_logs,
                 "stage-count": self._handle_build_stage_count,
                 "stage-logs": self._handle_build_stage_logs
             }
