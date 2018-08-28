@@ -259,3 +259,7 @@ parameters:
   name: $CCP_OPENSHIFT_SLAVE_IMAGE
   required: true
   value: registry.centos.org/pipeline-images/ccp-openshift-slave:latest
+- description: Branch of Pipeline service to checkout to
+  displayName: Pipeline branch
+  name: PIPELINE_BRANCH
+  required: true
