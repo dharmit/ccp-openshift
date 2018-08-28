@@ -216,11 +216,14 @@ class BuildConfigManager(object):
     by pipeline service
     """
 
-    def __init__(self, registry_url, namespace, from_address, smtp_server):
+    def __init__(self, registry_url, namespace, from_address, smtp_server,
+                 pipeline_repo, pipeline_branch):
         self.registry_url = registry_url
         self.namespace = namespace
         self.from_address = from_address
         self.smtp_server = smtp_server
+        self.pipeline_repo = pipeline_repo
+        self.pipeline_branch = pipeline_branch
         self.seed_template_params = """\
 -p GIT_URL={git_url} \
 -p GIT_PATH={git_path} \
@@ -237,7 +240,9 @@ class BuildConfigManager(object):
 -p PRE_BUILD_SCRIPT={pre_build_script} \
 -p REGISTRY_URL={registry_url} \
 -p FROM_ADDRESS={from_address} \
--p SMTP_SERVER={smtp_server}"""
+-p SMTP_SERVER={smtp_server} \
+-p PIPELINE_REPO={pipeline_repo} \
+-p PIPELINE_BRANCH={pipeline_branch}"""
 
         self.weekly_scan_template_params = """\
 -p PIPELINE_NAME=wscan-{pipeline_name} \
@@ -247,7 +252,9 @@ class BuildConfigManager(object):
 -p JOB_ID={job_id} \
 -p DESIRED_TAG={desired_tag} \
 -p FROM_ADDRESS={from_address} \
--p SMTP_SERVER={smtp_server}"""
+-p SMTP_SERVER={smtp_server} \
+-p PIPELINE_REPO={pipeline_repo} \
+-p PIPELINE_BRANCH={pipeline_branch}"""
 
     def list_all_buildConfigs(self):
         """
@@ -298,7 +305,9 @@ class BuildConfigManager(object):
             pre_build_script=project.pre_build_script,
             registry_url=self.registry_url,
             from_address=self.from_address,
-            smtp_server=self.smtp_server
+            smtp_server=self.smtp_server,
+            pipeline_repo=self.pipeline_repo,
+            pipeline_branch=self.pipeline_branch
         )
         # process and apply buildconfig
         output = run_cmd(command, shell=True)
@@ -344,7 +353,9 @@ class BuildConfigManager(object):
             job_id=project.job_id,
             registry_url=self.registry_url,
             from_address=self.from_address,
-            smtp_server=self.smtp_server
+            smtp_server=self.smtp_server,
+            pipeline_repo=self.pipeline_repo,
+            pipeline_branch=self.pipeline_branch
         )
         # process and apply buildconfig
         output = run_cmd(command, shell=True)
@@ -386,12 +397,14 @@ class Index(object):
     """
 
     def __init__(self, index, registry_url, namespace,
-                 from_address, smtp_server):
+                 from_address, smtp_server,
+                 pipeline_repo, pipeline_branch):
         # create index reader object
         self.index_reader = IndexReader(index, namespace)
         # create bc_manager object
         self.bc_manager = BuildConfigManager(
-            registry_url, namespace, from_address, smtp_server)
+            registry_url, namespace, from_address, smtp_server,
+            pipeline_repo, pipeline_branch)
         self.infra_projects = ["seed-job"]
 
     def find_stale_jobs(self, oc_projects, index_projects):
@@ -448,7 +461,7 @@ class Index(object):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 6:
+    if len(sys.argv) != 8:
         print ("Incomplete set of input variables, please refer README.")
         sys.exit(1)
 
@@ -457,8 +470,11 @@ if __name__ == "__main__":
     namespace = sys.argv[3].strip()
     from_address = sys.argv[4].strip()
     smtp_server = sys.argv[5].strip()
+    pipeline_repo = sys.argv[6].strip()
+    pipeline_branch = sys.argv[7].strip()
 
     index_object = Index(index, registry_url, namespace,
-                         from_address, smtp_server)
+                         from_address, smtp_server,
+                         pipeline_repo, pipeline_branch)
 
     index_object.run()
