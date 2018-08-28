@@ -211,6 +211,45 @@ class BuildInfo(JSONQueryProcessor):
             result = stage_flow_node_ids
         return result
 
+    def get_build_logs(
+            self, ordered_job_list, build_number
+    ):
+        """
+        Gets all the logs of a paticular build
+        :param ordered_job_list: The ordered list of jobs, with parents,
+        followed by children
+        :type ordered_job_list list
+        :param build_number: The id of the build
+        :type build_number str
+        :return: A list of dicts where each dict contains stage name, and stage
+        logs, as returned by get_stage_logs
+        stageflownodes.
+        None is returned on failure
+        """
+        # TODO : Make this testable
+        result = None
+        stage_count = self.get_stage_count(
+            ordered_job_list=ordered_job_list, build_number=build_number
+        )
+        if stage_count:
+            result = []
+            for i in range(1, stage_count):
+                result.append(
+                    {
+                        "name": self.get_stage_name(
+                            ordered_job_list=ordered_job_list,
+                            build_number=build_number, stage_id=str(i),
+                            id_is_number=True
+                        ),
+                        "logs": self.get_stage_logs(
+                            ordered_job_list=ordered_job_list,
+                            build_number=build_number, stage=str(i),
+                            stage_is_name=False
+                        )
+                    }
+                )
+        return result
+
     def get_stage_logs(
             self, ordered_job_list, build_number, stage, stage_is_name=True,
             test_data_set=None
@@ -228,7 +267,9 @@ class BuildInfo(JSONQueryProcessor):
         of stage, else it is treaded as stage number
         :type stage_is_name bool
         :param test_data_set: data set to be used for test run.
-        :return: A string containing the logs. None is returned on failure
+        :return: A list of dicts where each dict contains name, desc and log of
+        stageflownode.
+        None is returned on failure
         """
         result = None
         stage_flow_nodes = None
