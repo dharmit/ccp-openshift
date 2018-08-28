@@ -46,6 +46,40 @@ class BuildInfo(JSONQueryProcessor):
             count = -1
         return count
 
+    def get_stage_count(
+            self, ordered_job_list, build_number, test_data_set=None
+    ):
+        """
+        Gets the number of stages in a build of a project.
+        :param ordered_job_list: The ordered list of jobs, with parents,
+        followed by children
+        :type ordered_job_list list
+        :param build_number: The id of the build.
+        :type build_number str
+        :param test_data_set: data set to be used for test run.
+        :type test_data_set dict
+        :raises Exception
+        :return: The number of stages in the project. None is returned on
+        failure
+        """
+        result = None
+        stages = None
+        if not self.test:
+            data_set = self.get_data_from_response(
+                self.jenkins_client.describe_build_run(
+                    ordered_job_list, build_number=build_number
+                ),
+                bad_json=True
+            )
+        else:
+            data_set = test_data_set
+        if data_set:
+            stages = data_set.get("stages")
+        if data_set and stages:
+            result = len(stages)
+
+        return result
+
     def get_stage_id(
             self, ordered_job_list, build_number, stage, stage_is_name=True,
             test_data_set=None

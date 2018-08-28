@@ -176,10 +176,9 @@ class TestBuildInfo(unittest.TestCase):
                 test_data_set=test_data_set
             ),
             self.test_stage_flow_node_numbers,
-            "Both are equal"
         )
 
-    def test_04_gets_logs_correcty(self):
+    def test_04_gets_logs_correctly(self):
 
         test_data_set = [
             {
@@ -255,4 +254,43 @@ class TestBuildInfo(unittest.TestCase):
                 self.test_stage_flow_node_numbers,
                 self.test_logs
             ]
+        )
+
+    def test_05_gets_stage_count_correctly(self):
+        test_data_set = {
+            "_links": {
+                "self": {
+                    "href": "blah"
+                }
+            },
+            "durationMillis": 0,
+            "id": self.test_build_number,
+            "stages": [
+                {
+                    "_links": {
+                        "self": {
+                            "href": "blah"
+                        }
+                    },
+                    "id": "1",
+                    "name": "blah stage"
+                },
+                {
+                    "_links": {
+                        "self": {
+                            "href": "blah"
+                        }
+                    },
+                    "id": self.test_node_number,
+                    "name": self.test_stage_number
+                }
+            ]
+        }
+        self.assertEquals(
+            self.build_info.get_stage_count(
+                self.ordered_project_list,
+                self.test_build_number,
+                test_data_set=test_data_set
+            ),
+            2
         )
