@@ -1,8 +1,16 @@
+#! /usr/bin/python -W ignore
+"""
+This file contains the command line tooling to get pipeline information
+"""
+
 from ccp.lib.processors.pipeline_information.builds import BuildInfo
 import argparse
 
 
 class Engine(object):
+    """
+    The engine is the one that parses the arguments and takes action on them.
+    """
 
     def __init__(self):
         self.args = None
@@ -13,6 +21,9 @@ class Engine(object):
         }
 
     def init_parser(self):
+        """
+        Initialises the argument parser and parses arguments.
+        """
         parser = argparse.ArgumentParser(
             description="This tool can be used to query pipeline information."
         )
@@ -68,6 +79,9 @@ class Engine(object):
             )
 
     def handle_builds(self):
+        """
+        Handles all operations related to build sub-command
+        """
         what = self.args.what
         job = self.args.job
         out = ""
@@ -111,6 +125,10 @@ class Engine(object):
         print(out)
 
     def _run_handler(self, obj):
+        """
+        Runs the appropriate sub command handler
+        :param obj: The sub command
+        """
 
         h = self._handlers.get(
             obj,
@@ -120,6 +138,9 @@ class Engine(object):
             h()
 
     def run(self):
+        """
+        Run the engine
+        """
         self._run_handler(self.args.object)
 
 
