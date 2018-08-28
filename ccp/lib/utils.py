@@ -34,7 +34,6 @@ def request_url(
             auth=auth
         )
     except Exception as ex:
-        response = None
         raise ex
 
     return response
@@ -86,9 +85,10 @@ def run_cmd(cmd, shell=False, use_pipes=False):
 def json_to_python(data):
     """
     Parses the json and loads the data
-    :param data:
+    :param data: The json data to parse as string
+    :type data str
     :raises Exception
-    :return:
+    :return: Pythonic repersentation of json data
     """
     p = None
     try:
@@ -102,6 +102,10 @@ def parse_literals(data):
     """
     Parses literal, use to parse of string contains
     quotes.
+    :param data The data to be parsed as literal as a string.
+    :type data str
+    :raises Exception
+    :return: Pythonic repersentation of data
     """
     p = None
     try:

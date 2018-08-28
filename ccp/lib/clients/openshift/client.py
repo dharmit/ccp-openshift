@@ -19,6 +19,7 @@ class OpenshiftCmdClient(CmdClient):
         """
         Queries and gets the Jenkins token. This assumes you have access to oc
         command line.
+        :raises Exception
         :return: The token, if it was able to get it. Else, it returns None
         """
         token_cmd = """{core_oc_cmd} get sa/jenkins --template='{template1}' | \
