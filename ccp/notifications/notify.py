@@ -56,7 +56,7 @@ class BuildNotify(BaseNotify):
         :type status bool
         :param repository: Repository name of image along with registry name
         :type repository str
-        :param cause: Cause of the the build
+        :param cause: Cause of the build
         :type cause str
         :return: Email body of notification email in text
         """
