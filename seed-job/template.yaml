@@ -56,6 +56,11 @@ objects:
                     def daemonset_name = "scan-data_scan-data"
                     def success = false
                     try {
+                        stage('Debug ls')
+                        {
+                            sh "ls -l /var/run/docker.sock"
+                            sh "df -h"
+                        }
                         stage('Checkout Source') {
                             checkout([
                                 $class: 'GitSCM',
