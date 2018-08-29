@@ -27,22 +27,22 @@ class BaseNotify(object):
 
         # for build success notifications
         self.build_success_body = """\
-{0:<30}{1}
-{2:<30}{3}
-{4:<30}{5}"""
+{0:<25}{1}\n\
+{2:<25}{3}\n\
+{4:<25}{5}\n"""
 
         # for build failure notifications
         self.build_failure_body = """\
-{0:<30}{1}
-{2:<30}{3}"""
+{0:<25}{1}\n\
+{2:<25}{3}\n"""
 
         # for weekly scan success/failure case
         self.weekly_body = """\
-{0:<30}{1}
-{2:<30}{3}"""
+{0:<25}{1}\n\
+{2:<25}{3}\n"""
 
         # for weekly scan failure case when image is absent in registry
-        self.weekly_image_absent_body = "{0:<30}{1}"
+        self.weekly_image_absent_body = "{0:<25}{1}\n"
 
         # email footer to be added in all types of notifications
         self.email_footer = """\
@@ -51,5 +51,4 @@ Do you have a query?
 Talk to Pipeline team on #centos-devel at freenode
 CentOS Community Container Pipeline Service
 https://wiki.centos.org/ContainerPipeline
-https://github.com/centos/container-index
-"""
+https://github.com/centos/container-index"""
