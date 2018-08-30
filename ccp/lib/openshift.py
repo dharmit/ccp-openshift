@@ -184,7 +184,8 @@ class BuildInfo(object):
         return build_info
 
     def get_build_info(
-            self, namespace, jenkins_url, pipeline_name, build_number):
+            self, namespace, jenkins_url, pipeline_name,
+            build_number, weekly=False):
         """
         Given build identifiers, use Jenkins REST APIs to figure
         out details of the build

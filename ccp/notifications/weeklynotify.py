@@ -86,7 +86,7 @@ class WeeklyScanNotify(BaseNotify):
 
         build_info = self.buildinfo_obj.get_build_info(
             namespace, jenkins_url,
-            image_name, build_number)
+            image_name, build_number, weekly=True)
 
         # possible values are ["success", "failed", "image_absent"]
         if status == "image_absent":
