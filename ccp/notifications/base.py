@@ -21,9 +21,9 @@ class BaseNotify(object):
             "[registry.centos.org] FAILED: Container build {}"
         # weekly scan success/failure subject lines
         self.weekly_success_subj = \
-            "[registry.centos.org] SUCCESS: Weekly scan for {} is complete"
+            "[registry.centos.org] SUCCESS: Weekly scan for {}"
         self.weekly_failure_subj = \
-            "[registry.centos.org] FAILED: Weekly scan for {} has failed"
+            "[registry.centos.org] FAILED: Weekly scan for {}"
 
         # for build success notifications
         self.build_success_body = """\
