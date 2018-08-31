@@ -1,4 +1,8 @@
 <?xml version='1.0' encoding='UTF-8'?>
+<!--
+This file alters jenkins configuration on in process script approval
+Here we are allowing groovy jsonslurper to parse text from json input
+-->
 <scriptApproval plugin="script-security@1.31">
   <approvedScriptHashes/>
   <approvedSignatures>
