@@ -524,6 +524,9 @@ class Index(object):
             for project in batch:
                 # oc process and oc apply to all fresh and existing jobs
                 self.bc_manager.apply_build_job(project)
+            # sleep for 5 seconds after processing each batch
+            # to have them appeared on the console
+            time.sleep(5)
 
         print ("Processing weekly scan projects..")
         for project in index_projects:
