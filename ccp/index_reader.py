@@ -3,11 +3,21 @@ This script parses the container index specified and
 creates the Jenkins pipeline projects from entries of index.
 """
 
+import exceptions
+import re
 import subprocess
 import sys
 import yaml
 
 from glob import glob
+
+
+class InvalidPipelineName(exceptions.Exception):
+    """
+    Exception to be raised when pipeline name populated doesn't
+    confornt to allowed value for openshift template field metadata.name
+    """
+    pass
 
 
 def run_cmd(cmd, shell=False):
@@ -126,9 +136,27 @@ class Project(object):
 
     def get_pipeline_name(self):
         """
-        Returns the pipeline name based on the project object values
+        Returns the pipeline name based on appid, jobid and desired_tag
+        and also converts it to lower case
         """
-        return "{}-{}-{}".format(self.app_id, self.job_id, self.desired_tag)
+        pipeline_name = "{}-{}-{}".format(
+            self.app_id, self.job_id, self.desired_tag).lower()
+
+        # pipeline name which becomes value for metadata.name field in template
+        # must confront to following regex as per oc
+        # We tried to make the string acceptable by converting it to lower case
+        # Below we are adding another gate to make sure the pipeline_name is as
+        # per requirement, otherwise raising an exception with proper message
+        # to indicate the issue
+        pipeline_name_regex = ("^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]"
+                               "([-a-z0-9]*[a-z0-9])?)*$")
+        match = re.match(pipeline_name_regex, pipeline_name)
+
+        if not match:
+            msg = ("The pipeline name populated {} can't be used in OpenShift "
+                   "template in metadata.name field. ".format(pipeline_name))
+            raise(InvalidPipelineName(msg))
+        return pipeline_name
 
 
 class IndexReader(object):
@@ -188,11 +216,14 @@ class BuildConfigManager(object):
     by pipeline service
     """
 
-    def __init__(self, registry_url, namespace, from_address, smtp_server):
+    def __init__(self, registry_url, namespace, from_address, smtp_server,
+                 ccp_openshift_slave_image):
         self.registry_url = registry_url
         self.namespace = namespace
         self.from_address = from_address
         self.smtp_server = smtp_server
+        self.ccp_openshift_slave_image = ccp_openshift_slave_image
+
         self.seed_template_params = """\
 -p GIT_URL={git_url} \
 -p GIT_PATH={git_path} \
@@ -209,7 +240,8 @@ class BuildConfigManager(object):
 -p PRE_BUILD_SCRIPT={pre_build_script} \
 -p REGISTRY_URL={registry_url} \
 -p FROM_ADDRESS={from_address} \
--p SMTP_SERVER={smtp_server}"""
+-p SMTP_SERVER={smtp_server} \
+-p CCP_OPENSHIFT_SLAVE_IMAGE={ccp_openshift_slave_image}"""
 
         self.weekly_scan_template_params = """\
 -p PIPELINE_NAME=wscan-{pipeline_name} \
@@ -219,7 +251,8 @@ class BuildConfigManager(object):
 -p JOB_ID={job_id} \
 -p DESIRED_TAG={desired_tag} \
 -p FROM_ADDRESS={from_address} \
--p SMTP_SERVER={smtp_server}"""
+-p SMTP_SERVER={smtp_server} \
+-p CCP_OPENSHIFT_SLAVE_IMAGE={ccp_openshift_slave_image}"""
 
     def list_all_buildConfigs(self):
         """
@@ -240,7 +273,7 @@ class BuildConfigManager(object):
         """
         Applies the build job template that creates pipeline to build
         image, and trigger first time build as well.
-        :param project: The name of project, where the template is to be applied
+        :param project: The name of project, where template is to be applied
         :param template_location: The location of the template file.
         """
         oc_process = "oc process -f {0} {1}".format(
@@ -270,7 +303,8 @@ class BuildConfigManager(object):
             pre_build_script=project.pre_build_script,
             registry_url=self.registry_url,
             from_address=self.from_address,
-            smtp_server=self.smtp_server
+            smtp_server=self.smtp_server,
+            ccp_openshift_slave_image=self.ccp_openshift_slave_image
         )
         # process and apply buildconfig
         output = run_cmd(command, shell=True)
@@ -316,7 +350,8 @@ class BuildConfigManager(object):
             job_id=project.job_id,
             registry_url=self.registry_url,
             from_address=self.from_address,
-            smtp_server=self.smtp_server
+            smtp_server=self.smtp_server,
+            ccp_openshift_slave_image=self.ccp_openshift_slave_image
         )
         # process and apply buildconfig
         output = run_cmd(command, shell=True)
@@ -358,12 +393,14 @@ class Index(object):
     """
 
     def __init__(self, index, registry_url, namespace,
-                 from_address, smtp_server):
+                 from_address, smtp_server,
+                 ccp_openshift_slave_image):
         # create index reader object
         self.index_reader = IndexReader(index, namespace)
         # create bc_manager object
         self.bc_manager = BuildConfigManager(
-            registry_url, namespace, from_address, smtp_server)
+            registry_url, namespace, from_address, smtp_server,
+            ccp_openshift_slave_image)
         self.infra_projects = ["seed-job"]
 
     def find_stale_jobs(self, oc_projects, index_projects):
@@ -420,7 +457,7 @@ class Index(object):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 6:
+    if len(sys.argv) != 7:
         print ("Incomplete set of input variables, please refer README.")
         sys.exit(1)
 
@@ -429,8 +466,10 @@ if __name__ == "__main__":
     namespace = sys.argv[3].strip()
     from_address = sys.argv[4].strip()
     smtp_server = sys.argv[5].strip()
+    ccp_openshift_slave_image = sys.argv[6].strip()
 
     index_object = Index(index, registry_url, namespace,
-                         from_address, smtp_server)
+                         from_address, smtp_server,
+                         ccp_openshift_slave_image)
 
     index_object.run()
