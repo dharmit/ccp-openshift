@@ -3,11 +3,22 @@ This script parses the container index specified and
 creates the Jenkins pipeline projects from entries of index.
 """
 
+import exceptions
+import re
 import subprocess
 import sys
+import time
 import yaml
 
 from glob import glob
+
+
+class InvalidPipelineName(exceptions.Exception):
+    """
+    Exception to be raised when pipeline name populated doesn't
+    confornt to allowed value for openshift template field metadata.name
+    """
+    pass
 
 
 def run_cmd(cmd, shell=False):
@@ -126,9 +137,27 @@ class Project(object):
 
     def get_pipeline_name(self):
         """
-        Returns the pipeline name based on the project object values
+        Returns the pipeline name based on appid, jobid and desired_tag
+        and also converts it to lower case
         """
-        return "{}-{}-{}".format(self.app_id, self.job_id, self.desired_tag)
+        pipeline_name = "{}-{}-{}".format(
+            self.app_id, self.job_id, self.desired_tag).lower()
+
+        # pipeline name which becomes value for metadata.name field in template
+        # must confront to following regex as per oc
+        # We tried to make the string acceptable by converting it to lower case
+        # Below we are adding another gate to make sure the pipeline_name is as
+        # per requirement, otherwise raising an exception with proper message
+        # to indicate the issue
+        pipeline_name_regex = ("^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]"
+                               "([-a-z0-9]*[a-z0-9])?)*$")
+        match = re.match(pipeline_name_regex, pipeline_name)
+
+        if not match:
+            msg = ("The pipeline name populated {} can't be used in OpenShift "
+                   "template in metadata.name field. ".format(pipeline_name))
+            raise(InvalidPipelineName(msg))
+        return pipeline_name
 
 
 class IndexReader(object):
@@ -240,7 +269,7 @@ class BuildConfigManager(object):
         """
         Applies the build job template that creates pipeline to build
         image, and trigger first time build as well.
-        :param project: The name of project, where the template is to be applied
+        :param project: Name of project, where the template is to be applied
         :param template_location: The location of the template file.
         """
         oc_process = "oc process -f {0} {1}".format(
@@ -350,6 +379,46 @@ class BuildConfigManager(object):
             print ("Deleting buildConfig {}".format(bc))
             run_cmd(command.format(self.namespace, bc))
 
+    def list_all_builds(self):
+        """
+        List all the builds
+        """
+        command = """\
+oc get builds -o name -o template \
+--template='{{range .items }}{{.metadata.name}}:{{.status.phase}} {{end}}'"""
+        output = run_cmd(command, shell=True)
+        return output.strip().split()
+
+    def list_builds_except(
+            self,
+            status=["Complete", "Failed"],
+            filter_builds=["seed-job"]):
+        """
+        List the builds except the phase(s) provided
+        default status=["Complete", "Failed"] <-- This will return
+        all the builds except the status.phase in ["Complete", "Failed"].
+
+        If status=[], return all the builds
+        """
+        if not status:
+            return self.list_all_builds()
+
+        conditional = '(ne .status.phase "{}") '
+        condition = ''
+        for phase in status:
+            condition = condition + conditional.format(phase)
+
+        command = """\
+oc get builds -o name -o template --template='{{range .items }} \
+{{if and %s }} {{.metadata.name}}:{{.status.phase}} \
+{{end}}{{end}}'""" % condition
+        output = run_cmd(command, shell=True)
+        output = output.strip().split(' ')
+        output = [each for each in output
+                  if not each.startswith(tuple(filter_builds)
+                                         and each)]
+        return output
+
 
 class Index(object):
     """
@@ -414,9 +483,55 @@ class Index(object):
             # delete all the stal projects/buildconfigs
             self.bc_manager.delete_buildconfigs(stale_projects)
 
-        # oc process and oc apply to all fresh and existing jobs
+        print ("Number of projects to be updated/created: {}".format(
+            len(index_projects)))
+
+        self.batch_process_projects(index_projects)
+
+    def batch(self, target, batch_size):
+        """
+        Returns a generator object yielding chunks of list
+        of length=batch_size from target list
+        """
+        for i in range(0, len(target), batch_size):
+            yield target[i:i + batch_size]
+
+    def batch_process_projects(self,
+                               index_projects, batch_size=5, poll_cycle=120):
+        """
+        Given a list of projects, oc apply the buildconfigs
+        in batches and oc apply the weekly scan jobs at the end
+        """
+        # Split the projects to process in equal sized chunks
+        for batch in self.batch(index_projects, batch_size):
+            outstanding_builds = True
+            while outstanding_builds:
+                # Check if builds are in status.phase other than Complete
+                # or Failed. We dont care about builds which are failed
+                # or complete to queue up next batch of jobs to process
+                outstanding_builds = self.bc_manager.list_builds_except(
+                    status=["Complete", "Failed"],
+                    filter_builds=self.infra_projects)
+
+                if outstanding_builds:
+                    print ("Waiting for completion of builds {}".format(
+                           outstanding_builds))
+                    time.sleep(poll_cycle)
+
+            print ("Processing projects batch: {}".format(
+                [each.pipeline_name for each in batch]))
+
+            for project in batch:
+                # oc process and oc apply to all fresh and existing jobs
+                self.bc_manager.apply_build_job(project)
+            # sleep for 5 seconds after processing each batch
+            # to have them appeared on the console
+            time.sleep(5)
+
+        print ("Processing weekly scan projects..")
         for project in index_projects:
-            self.bc_manager.apply_buildconfigs(project)
+            self.bc_manager.apply_weekly_scan(project)
+            time.sleep(5)
 
 
 if __name__ == "__main__":
