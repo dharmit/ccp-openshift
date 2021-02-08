@@ -18,7 +18,7 @@ Also make sure that the firewall rules are not blocking access to the registry
 
 ### OpenShift setup
 
-**Minishift**
+**Minishift:**
 
 Start the minishift VM using below command:
 
